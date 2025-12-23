@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Новогодний Лабиринт</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0a1929;
+  background-image: url('YOUR_BACKGROUND_IMAGE_URL_HERE.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  color: #ffd700;
+  font-size: 2.8em;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+  margin-bottom: 15px;
+}
+
+.instructions {
+  background: rgba(13, 28, 51, 0.95);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.instructions h2 {
+  color: #ffd700;
+  font-size: 1.5em;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.instructions p {
+  line-height: 1.6;
+  margin-bottom: 8px;
+  color: #e0f2ff;
+}
+
+.instructions strong {
+  color: #ff6b6b;
+}
+
+.stats-panel {
+  background: rgba(13, 28, 51, 0.95);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  color: #b8d4ff;
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.keys-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.keys-icons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.key-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border-radius: 50%;
+  opacity: 0.25;
+  transition: all 0.3s;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.key-icon.collected {
+  opacity: 1;
+  box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.canvas-container {
+  background: rgba(13, 28, 51, 0.95);
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+canvas {
+  display: block;
+  max-width: 600px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 8px;
+}
+
+.buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+button {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #4ecdc4, #44a8a0);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(78, 205, 196, 0.6);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a2f4b, #0d1c33);
+  padding: 35px;
+  border-radius: 20px;
+  max-width: 550px;
+  width: 90%;
+  box-shadow: 0 0 60px rgba(255, 215, 0, 0.5);
+  border: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.modal-title {
+  font-size: 2em;
+  color: #ffd700;
+  margin-bottom: 25px;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.question-text {
+  font-size: 1.5em;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #ff6b6b;
+  font-weight: 600;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 107, 107, 0.3);
+}
+
+.answer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer-btn {
+  padding: 18px;
+  background: rgba(78, 205, 196, 0.2);
+  color: #fff;
+  border: 2px solid rgba(78, 205, 196, 0.5);
+  border-radius: 12px;
+  font-size: 1.15em;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.answer-btn:hover {
+  background: rgba(78, 205, 196, 0.4);
+  border-color: #4ecdc4;
+  transform: scale(1.03);
+  box-shadow: 0 0 25px rgba(78, 205, 196, 0.4);
+}
+
+.victory-stats {
+  margin: 25px 0;
+  text-align: center;
+}
+
+.victory-stat {
+  margin: 12px 0;
+  font-size: 1.3em;
+  color: #b8d4ff;
+}
+
+.perfect-message {
+  font-size: 1.8em;
+  color: #4ecdc4;
+  margin: 25px 0;
+  text-align: center;
+  text-shadow: 0 0 25px rgba(78, 205, 196, 0.6);
+  animation: glow 2s infinite;
+}
+
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 25px rgba(78, 205, 196, 0.6); }
+  50% { text-shadow: 0 0 40px rgba(78, 205, 196, 0.9); }
+}
+
+.snowflake {
+  position: absolute;
+  color: #fff;
+  font-size: 1.5em;
+  opacity: 0.8;
+  animation: fall linear infinite;
+  pointer-events: none;
+}
+
+@keyframes fall {
+  to { transform: translateY(100vh); }
+}
+
+
+.instructions-body p {
+  line-height: 1.6;
+  margin-bottom: 8px;
+  color: #e0f2ff;
+}
+
+.instructions-body strong {
+  color: #ff6b6b;
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2em;
+  }
+  
+  .stats-panel {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  button {
+    width: 100%;
+  }
+}
+
+
+/* --- Mobile & responsive --- */
+.game-area {
+  width: min(94vw, 720px);
+  margin: 0 auto;
+}
+
+#gameCanvas {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  border-radius: 18px;
+}
+
+/* D‑pad (показываем на телефоне/планшете) */
+.mobile-controls {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  grid-template-rows: repeat(3, 64px);
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.dpad-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.dpad-btn:active {
+  transform: scale(0.98);
+  background: rgba(255,255,255,0.18);
+}
+
+.dpad-spacer {
+  width: 64px;
+  height: 64px;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .mobile-controls { display: block; }
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>❄️ Новогодний Лабиринт 🎄</h1>
+  </div>
+  
+  <div class="stats-panel">
+    <div class="stat-item">
+      <div class="stat-label">⏱ Время</div>
+      <div class="stat-value" id="timer">00:00.0</div>
+    </div>
+    
+    <div class="stat-item">
+      <div class="stat-label">👣 Шаги</div>
+      <div class="stat-value" id="steps">0</div>
+    </div>
+    
+    <div class="stat-item keys-display">
+      <div class="stat-label">🔑 Ключи</div>
+      <div class="keys-icons" id="keysIcons"></div>
+    </div>
+  </div>
+  
+  <div class="game-area">
+    <div class="canvas-container">
+      <canvas id="mazeCanvas" width="600" height="600"></canvas>
+    </div>
+    
+    <div class="buttons">
+      <button class="btn-primary" onclick="game.newMaze()">🎮 Новый лабиринт</button>
+      <button class="btn-secondary" onclick="game.replay()">🔄 Переиграть</button>
+      <button class="btn-secondary" onclick="toggleInstructions(true)">📜 Правила</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id="instructionsModal">
+  <div class="modal-content">
+    <div class="modal-title">📜 Правила игры</div>
+    <div class="instructions-body">
+      <p><strong>Цель:</strong> Собери все 10 волшебных ключей, правильно отвечая на вопросы по русскому языку.</p>
+      <p><strong>Управление:</strong> Используй стрелки на клавиатуре или клавиши WASD для перемещения.
+<!-- Мобильное управление -->
+<div class="mobile-controls" id="mobileControls" aria-label="Управление лабиринтом">
+  <div class="dpad">
+    <div class="dpad-spacer"></div>
+    <button class="dpad-btn" id="btnUp" aria-label="Вверх">▲</button>
+    <div class="dpad-spacer"></div>
+
+    <button class="dpad-btn" id="btnLeft" aria-label="Влево">◀</button>
+    <div class="dpad-spacer"></div>
+    <button class="dpad-btn" id="btnRight" aria-label="Вправо">▶</button>
+
+    <div class="dpad-spacer"></div>
+    <button class="dpad-btn" id="btnDown" aria-label="Вниз">▼</button>
+    <div class="dpad-spacer"></div>
+  </div>
+</div>
+
+</p>
+      <p><strong>Ключи:</strong> Подбери жёлтый ключ и ответь на вопрос о чередующихся гласных. Правильный ответ — ключ засчитывается. Неправильный — ключ перемещается в другое место.</p>
+      <p><strong>Победа:</strong> Как только соберёшь все ключи — ты победил(а)! 🎉</p>
+    </div>
+    <button class="btn-secondary" style="width: 100%; margin-top: 20px;" onclick="toggleInstructions(false)">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal" id="questionModal">
+  <div class="modal-content">
+    <div class="modal-title">🔑 Ответь на вопрос</div>
+    <div class="question-text" id="questionText"></div>
+    <div class="answer-buttons" id="answerButtons"></div>
+  </div>
+</div>
+
+<div class="modal" id="victoryModal">
+  <div class="modal-content">
+    <div class="modal-title">🎉 Победа! 🎉</div>
+    <div class="perfect-message">⭐ Идеальное прохождение! ⭐</div>
+    <div class="victory-stats">
+      <div class="victory-stat">⏱ Время: <span id="finalTime"></span></div>
+      <div class="victory-stat">👣 Шаги: <span id="finalSteps"></span></div>
+    </div>
+    <button class="btn-primary" style="width: 100%; margin-top: 25px;" onclick="game.newMaze(); document.getElementById('victoryModal').classList.remove('show')">🎮 Новая игра</button>
+  </div>
+</div>
+
+<script>
+// Вопросы по чередующимся гласным в корне слова
+const QUESTIONS = [
+  "Выбери букву для слова: заг..р,а,о,1",
+  "Выбери букву для слова: к..саться,а,о,1",
+  "Выбери букву для слова: изл..жение,а,о,2",
+  "Выбери букву для слова: выр..сти,а,о,1",
+  "Выбери букву для слова: соб..рать,е,и,2",
+  "Выбери букву для слова: зам..реть,е,и,1",
+  "Выбери букву для слова: бл..стеть,е,и,1",
+  "Выбери букву для слова: выт..рать,е,и,2",
+  "Выбери букву для слова: ск..кать,а,о,1",
+  "Выбери букву для слова: пол..жить,а,о,2",
+  "Выбери букву для слова: зар..сли,а,о,2",
+  "Выбери букву для слова: предл..гать,а,о,1",
+  "Выбери букву для слова: заг..релый,а,о,2",
+  "Выбери букву для слова: прик..снуться,а,о,2",
+  "Выбери букву для слова: р..стение,а,о,1",
+  "Выбери букву для слова: выск..чить,а,о,2",
+  "Выбери букву для слова: ум..реть,е,и,1",
+  "Выбери букву для слова: расст..лать,е,и,2",
+  "Выбери букву для слова: выр..щенный,а,о,1",
+  "Выбери букву для слова: отр..сль,а,о,1",
+  "Выбери букву для слова: выб..рать,е,и,2",
+  "Выбери букву для слова: прил..гательное,а,о,1",
+  "Выбери букву для слова: р..сток,а,о,2",
+  "Выбери букву для слова: отл..жить,а,о,2",
+  "Выбери букву для слова: приг..рать,а,о,2",
+  "Выбери букву для слова: р..стовщик,а,о,2",
+  "Выбери букву для слова: заст..лить,е,и,1",
+  "Выбери букву для слова: накл..ниться,а,о,2",
+  "Выбери букву для слова: з..ря,а,о,1",
+  "Выбери букву для слова: поск..кать,а,о,1",
+  "Выбери букву для слова: скл..нение,а,о,2",
+  "Выбери букву для слова: выг..реть,а,о,2",
+  "Выбери букву для слова: распол..жение,а,о,2",
+  "Выбери букву для слова: выг..рки,а,о,1",
+  "Выбери букву для слова: ск..кун,а,о,1",
+  "Выбери букву для слова: уг..реть,а,о,2",
+  "Выбери букву для слова: разб..рать,е,и,2",
+  "Выбери букву для слова: пост..лить,е,и,1",
+  "Выбери букву для слова: прик..саться,а,о,1",
+  "Выбери букву для слова: предпол..жить,а,о,2",
+  "Выбери букву для слова: выр..стить,а,о,1",
+  "Выбери букву для слова: зам..рать,е,и,2",
+  "Выбери букву для слова: прот..реть,е,и,1",
+  "Выбери букву для слова: выб..рающий,е,и,2",
+  "Выбери букву для слова: сл..гаемое,а,о,1",
+  "Выбери букву для слова: зан..мать,е,и,2",
+  "Выбери букву для слова: накл..нение,а,о,2",
+  "Выбери букву для слова: покл..нение,а,о,2",
+  "Выбери букву для слова: уг..р,а,о,1",
+  "Выбери букву для слова: прил..жение,а,о,2"
+].map(q => {
+  const parts = q.split(',');
+  return {
+    question: parts[0],
+    answers: [parts[1], parts[2]],
+    correct: parseInt(parts[3], 10) - 1
+  };
+});
+
+// Создание снежинок
+function createSnowflakes() {
+  setInterval(() => {
+    const snowflake = document.createElement('div');
+    snowflake.className = 'snowflake';
+    snowflake.textContent = '❄';
+    snowflake.style.left = Math.random() * 100 + '%';
+    snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+    snowflake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+    document.body.appendChild(snowflake);
+    
+    setTimeout(() => snowflake.remove(), 5000);
+  }, 300);
+}
+
+createSnowflakes();
+
+// --- Звуки ---
+// Положи файлы рядом с HTML в папку: audio/victory.mp3, audio/correct.mp3, audio/wrong.mp3
+// (или поменяй пути ниже)
+const SOUND_PATHS = {
+  victory: 'audio/victory.mp3',
+  correct: 'audio/correct.mp3',
+  wrong: 'audio/wrong.mp3'
+};
+
+// --- Правила (в отдельной кнопке) ---
+function toggleInstructions(show) {
+  const modal = document.getElementById('instructionsModal');
+  if (!modal) return;
+  modal.classList.toggle('show', !!show);
+}
+
+// Закрытие модалки по клику на затемнение
+document.getElementById('instructionsModal')?.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'instructionsModal') toggleInstructions(false);
+});
+
+
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('mazeCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.size = 20;
+    this.cellSize = this.canvas.width / this.size;
+    
+    this.startTime = Date.now();
+    this.steps = 0;
+    this.keysCollected = 0;
+    this.totalKeys = 10;
+    this.gameWon = false;
+    this.paused = false;
+
+    this.soundEnabled = true;
+    this.initSounds();
+
+    this.initKeyIcons();
+    this.newMaze();
+    this.setupControls();
+    this.startTimer();
+  }
+  
+  initKeyIcons() {
+    const container = document.getElementById('keysIcons');
+    container.innerHTML = '';
+    for (let i = 0; i < this.totalKeys; i++) {
+      const icon = document.createElement('div');
+      icon.className = 'key-icon';
+      icon.id = `key-icon-${i}`;
+      container.appendChild(icon);
+    }
+  }
+
+  initSounds() {
+    // Создаём аудио-объекты один раз, чтобы не грузить/не создавать их при каждом событии
+    this.sounds = {};
+    this._soundLastAt = {};
+    for (const [key, src] of Object.entries(SOUND_PATHS)) {
+      const a = new Audio(src);
+      a.preload = 'auto';
+      a.volume = 0.8;
+      this.sounds[key] = a;
+    }
+  }
+
+  playSound(key) {
+    if (!this.soundEnabled) return;
+    const a = this.sounds?.[key];
+    if (!a) return;
+
+    // Мини-антиспам, чтобы звук не "трещал" при частых касаниях
+    const now = Date.now();
+    const last = this._soundLastAt[key] || 0;
+    if (now - last < 250) return;
+    this._soundLastAt[key] = now;
+
+    try {
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  
+  newMaze() {
+    this.maze = this.generateMaze();
+    this.player = {x: 1, y: 1};
+    this.keys = [];
+    this.keysCollected = 0;
+    this.steps = 0;
+    this.startTime = Date.now();
+    this.gameWon = false;
+    this.usedQuestions = [];
+    
+    this.initKeyIcons();
+    this.placeKeys();
+    this.draw();
+  }
+  
+  replay() {
+    this.newMaze();
+  }
+  
+  generateMaze() {
+    const maze = Array(this.size).fill().map(() => Array(this.size).fill(1));
+    const stack = [];
+    const start = {x: 1, y: 1};
+    
+    maze[start.y][start.x] = 0;
+    stack.push(start);
+    
+    const dirs = [{x:0,y:-2},{x:2,y:0},{x:0,y:2},{x:-2,y:0}];
+    
+    while (stack.length > 0) {
+      const current = stack[stack.length - 1];
+      const neighbors = [];
+      
+      for (const dir of dirs) {
+        const nx = current.x + dir.x;
+        const ny = current.y + dir.y;
+        
+        if (nx > 0 && nx < this.size - 1 && ny > 0 && ny < this.size - 1 && maze[ny][nx] === 1) {
+          neighbors.push({x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2});
+        }
+      }
+      
+      if (neighbors.length > 0) {
+        const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+        maze[next.y][next.x] = 0;
+        maze[current.y + next.dy][current.x + next.dx] = 0;
+        stack.push({x: next.x, y: next.y});
+      } else {
+        stack.pop();
+      }
+    }
+    
+    // Дополнительные проходы для уменьшения тупиков
+    for (let i = 0; i < this.size * 2; i++) {
+      const x = Math.floor(Math.random() * (this.size - 2)) + 1;
+      const y = Math.floor(Math.random() * (this.size - 2)) + 1;
+      if (maze[y][x] === 1) {
+        const neighbors = [
+          {x: x-1, y: y}, {x: x+1, y: y},
+          {x: x, y: y-1}, {x: x, y: y+1}
+        ].filter(n => n.x > 0 && n.x < this.size-1 && n.y > 0 && n.y < this.size-1 && maze[n.y][n.x] === 0);
+        
+        if (neighbors.length >= 2) {
+          maze[y][x] = 0;
+        }
+      }
+    }
+    
+    return maze;
+  }
+  
+  placeKeys() {
+    this.keys = [];
+    for (let i = 0; i < this.totalKeys; i++) {
+      this.keys.push(this.getRandomEmptyCell());
+    }
+  }
+  
+  getRandomEmptyCell() {
+    let x, y;
+    let tries = 0;
+
+    const isOccupied = (cx, cy) => {
+      if (cx === this.player.x && cy === this.player.y) return true;
+      if (this.keys && this.keys.some(k => k && k.x === cx && k.y === cy)) return true;
+      return false;
+    };
+
+    do {
+      x = Math.floor(Math.random() * (this.size - 2)) + 1;
+      y = Math.floor(Math.random() * (this.size - 2)) + 1;
+      tries++;
+      // защита от бесконечного цикла на маленьких/плотных лабиринтах
+      if (tries > 5000) break;
+    } while (this.maze[y][x] === 1 || isOccupied(x, y));
+
+    return {x, y};
+  }
+  
+  setupControls() {
+    // Делает canvas фокусируемым: это критично встраиваний (iframe/VK/Genially),
+    // где клавиатура часто работает только после фокуса внутри фрейма.
+    this.canvas.setAttribute('tabindex', '0');
+    this.canvas.style.outline = 'none';
+
+    const keyHandler = (e) => {
+      const k = (e.key || '').toLowerCase();
+      const isMoveKey = (
+        k === 'arrowup' || k === 'arrowdown' || k === 'arrowleft' || k === 'arrowright' ||
+        k === 'w' || k === 'a' || k === 's' || k === 'd'
+      );
+
+      if (!isMoveKey) return;
+
+      // Чтобы стрелки не скроллили страницу/фрейм
+      e.preventDefault();
+
+      if (this.gameWon || this.paused) return;
+
+      if (k === 'arrowup' || k === 'w') {
+        this.move(0, -1);
+      } else if (k === 'arrowdown' || k === 's') {
+        this.move(0, 1);
+      } else if (k === 'arrowleft' || k === 'a') {
+        this.move(-1, 0);
+      } else if (k === 'arrowright' || k === 'd') {
+        this.move(1, 0);
+      }
+    };
+
+    this._keyHandler = keyHandler;
+
+    // window-слушатель чаще всего надёжнее document в embed-режимах
+    window.addEventListener('keydown', keyHandler, { passive: false, capture: true });
+
+    // Возвращаем фокус в игру после клика по канвасу
+    this.canvas.addEventListener('pointerdown', () => this.focusGame(), { passive: true });
+
+    // Сразу пробуем сфокусироваться (работает в большинстве браузеров)
+    this.focusGame();
+  }
+
+  focusGame() {
+    try {
+      this.canvas.focus({ preventScroll: true });
+    } catch (e) {
+      try { this.canvas.focus(); } catch (e2) {}
+    }
+  }
+
+  move(dx, dy) {
+    const newX = this.player.x + dx;
+    const newY = this.player.y + dy;
+    
+    if (newX >= 0 && newX < this.size && newY >= 0 && newY < this.size && this.maze[newY][newX] === 0) {
+      this.player.x = newX;
+      this.player.y = newY;
+      this.steps++;
+      document.getElementById('steps').textContent = this.steps;
+      
+      this.checkKeyCollision();
+      this.draw();
+      return true;
+    }
+    return false;
+  }
+  
+  checkKeyCollision() {
+    if (this.paused) return;
+
+    for (let i = 0; i < this.keys.length; i++) {
+      const key = this.keys[i];
+      if (key && this.player.x === key.x && this.player.y === key.y) {
+        this.showQuestion(i);
+        break;
+      }
+    }
+  }
+  
+  
+  showQuestion(keyIndex) {
+      // Защита от повторного открытия
+      if (this.gameWon || this.paused) return;
+  
+      const modal = document.getElementById('questionModal');
+      const questionTextEl = document.getElementById('questionText');
+      const answerButtons = document.getElementById('answerButtons');
+  
+      if (!modal || !questionTextEl || !answerButtons) {
+        console.error('Не найдено окно вопроса (questionModal/questionText/answerButtons)');
+        return;
+      }
+  
+      // 1) Берём вопрос из банка (поддерживаем и строки, и объекты)
+      let raw = null;
+      try {
+        const availableIdx = [];
+        for (let i = 0; i < QUESTIONS.length; i++) {
+          // indexOf вместо includes — надёжнее в embed/старых webview
+          if (this.usedQuestions.indexOf(i) === -1) availableIdx.push(i);
+        }
+  
+        if (availableIdx.length > 0) {
+          const idx = availableIdx[Math.floor(Math.random() * availableIdx.length)];
+          raw = QUESTIONS[idx];
+          this.usedQuestions.push(idx);
+        } else {
+          raw = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+        }
+      } catch (e) {
+        raw = (typeof QUESTIONS !== 'undefined' && QUESTIONS && QUESTIONS.length) ? QUESTIONS[0] : 'Вопрос,Да,Нет,1';
+        console.error('Ошибка выбора вопроса:', e);
+      }
+  
+      if (!raw) raw = 'Выбери правильный ответ:,Вариант 1,Вариант 2,1';
+  
+      // 2) Нормализуем в формат: { text, answers[2], correctIdx(0/1) }
+      let text = 'Выбери правильный ответ:';
+      let answers = ['Вариант 1', 'Вариант 2'];
+      let correctIdx = 0;
+  
+      const normCorrect = (v, oneBasedHint = false) => {
+        if (v === null || v === undefined) return 0;
+
+        let n = Number(v);
+        if (!Number.isFinite(n)) n = parseInt(String(v).trim(), 10);
+        if (!Number.isFinite(n)) return 0;
+
+        // Если известно, что правильный ответ задан как 1/2 (1‑based) — конвертируем.
+        if (oneBasedHint) return n === 2 ? 1 : 0;
+
+        // Иначе считаем, что 0/1 уже 0‑based (как в нашем массиве QUESTIONS).
+        if (n === 0 || n === 1) return n;
+
+        // Поддержка значения 2 (часто встречается в 1‑based)
+        if (n === 2) return 1;
+
+        // Подстраховка: clamp в диапазон 0..1
+        return n > 0 ? 1 : 0;
+      };
+  
+      try {
+        if (raw && typeof raw === 'object') {
+          // формат объекта: { question/text, answers/options, correctIndex/correct }
+          const t = raw.question ?? raw.text ?? raw.q ?? raw.prompt;
+          if (t !== undefined) text = String(t).trim() || text;
+  
+          const arr = raw.answers ?? raw.options ?? raw.variants ?? raw.a;
+          if (Array.isArray(arr)) {
+            answers = [arr[0], arr[1]];
+          } else {
+            const a1 = raw.answer1 ?? raw.a1 ?? raw.option1;
+            const a2 = raw.answer2 ?? raw.a2 ?? raw.option2;
+            if (a1 !== undefined || a2 !== undefined) answers = [a1, a2];
+          }
+  
+          const c = raw.correctIndex ?? raw.correctIdx ?? raw.correct ?? raw.right ?? raw.answer ?? raw.correctAnswer;
+          correctIdx = normCorrect(c);
+        } else {
+          // формат строки: "Текст,вариант1,вариант2,номер_правильного(1/2)"
+          const tokens = String(raw).split(',');
+          if (tokens.length >= 4) {
+            const correctToken = (tokens.pop() ?? '').trim();
+            const a2 = (tokens.pop() ?? '').trim();
+            const a1 = (tokens.pop() ?? '').trim();
+            text = tokens.join(',').trim() || text;
+            answers = [a1, a2];
+            correctIdx = normCorrect(correctToken, true);
+          } else {
+            text = String(raw || '').trim() || text;
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка парсинга вопроса:', e);
+      }
+  
+      // 3) Гарантируем РОВНО 2 варианта ответов
+      answers = (answers || []).slice(0, 2).map((a, i) => {
+        const s = (a === null || a === undefined) ? '' : String(a);
+        return s.trim() || `Вариант ${i + 1}`;
+      });
+      if (answers.length < 2) {
+        while (answers.length < 2) answers.push(`Вариант ${answers.length + 1}`);
+      }
+  
+      // 4) Собираем UI
+      questionTextEl.textContent = text;
+      answerButtons.innerHTML = '';
+      // Защита от двойного клика/Enter: вопрос можно ответить только один раз
+      this._answerLocked = false;
+      this._activeQuestion = { keyIndex, correctIdx };
+  
+      answers.forEach((answer, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'answer-btn';
+        btn.textContent = answer;
+        btn.onclick = () => this.answerQuestion(keyIndex, idx === correctIdx);
+        answerButtons.appendChild(btn);
+      });
+  
+      // 5) И только теперь ставим паузу и показываем окно
+      this.paused = true;
+      modal.classList.add('show');
+  
+      // Фокус на первый вариант (чтобы клавиатура и Enter работали без "залипаний")
+      setTimeout(() => {
+        const firstBtn = answerButtons.querySelector('button');
+        if (firstBtn) {
+          try { firstBtn.focus({ preventScroll: true }); } catch (e) { try { firstBtn.focus(); } catch (e2) {} }
+        }
+      }, 0);
+    }
+  
+  answerQuestion(keyIndex, correct) {
+    // Страховка: один вопрос — один ответ (иначе "оживают" ключи и появляются лишние)
+    if (this._answerLocked) return;
+    this._answerLocked = true;
+
+    // Отключаем кнопки сразу, чтобы не было двойного срабатывания
+    const answerButtons = document.getElementById('answerButtons');
+    if (answerButtons) {
+      answerButtons.querySelectorAll('button').forEach(b => { b.disabled = true; b.style.pointerEvents = 'none'; });
+    }
+
+    // Если этот ключ уже был засчитан — просто выходим (например, при двойном клике)
+    if (!this.keys || this.keys[keyIndex] === null) {
+      const modal = document.getElementById('questionModal');
+      if (modal) modal.classList.remove('show');
+      this.paused = false;
+      this.draw();
+      this.focusGame();
+      return;
+    }
+    const modal = document.getElementById('questionModal');
+    if (modal) modal.classList.remove('show');
+    this.paused = false;
+
+    if (correct) {
+      this.playSound('correct');
+
+      // Засчитываем ключ
+      this.keys[keyIndex] = null;
+      this.keysCollected++;
+
+      const icon = document.getElementById(`key-icon-${keyIndex}`);
+      if (icon) icon.classList.add('collected');
+
+      if (this.keysCollected === this.totalKeys) {
+        this.gameWon = true;
+        this.showVictory();
+        return;
+      }
+    } else {
+      this.playSound('wrong');
+
+      // Неверно: ключ НЕ засчитывается, а "улетает" в новое место (НЕ под игроком)
+      let cell = null;
+      let guard = 0;
+      do {
+        cell = this.getRandomEmptyCell();
+        guard++;
+      } while (cell && cell.x === this.player.x && cell.y === this.player.y && guard < 200);
+
+      this.keys[keyIndex] = cell;
+    }
+
+    this.draw();
+    this.focusGame();
+  }
+
+  showVictory() {
+    this.playSound('victory');
+
+    // Сообщаем странице-обложке (index) о завершении
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'tabletSuccess' }, '*');
+      }
+    } catch (e) {}
+
+    const modal = document.getElementById('victoryModal');
+    const elapsed = Date.now() - this.startTime;
+    const minutes = Math.floor(elapsed / 60000);
+    const seconds = Math.floor((elapsed % 60000) / 1000);
+    const tenths = Math.floor((elapsed % 1000) / 100);
+    
+    document.getElementById('finalTime').textContent = 
+      `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${tenths}`;
+    document.getElementById('finalSteps').textContent = this.steps;
+    
+    modal.classList.add('show');
+  }
+  
+  draw() {
+    this.ctx.fillStyle = '#0a1929';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    for (let y = 0; y < this.size; y++) {
+      for (let x = 0; x < this.size; x++) {
+        if (this.maze[y][x] === 1) {
+          this.ctx.fillStyle = '#1a3a52';
+          this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+          this.ctx.strokeStyle = '#0d1c33';
+          this.ctx.lineWidth = 1;
+          this.ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        }
+      }
+    }
+    
+    this.keys.forEach(key => {
+      if (key) {
+        const grad = this.ctx.createRadialGradient(
+          (key.x + 0.5) * this.cellSize,
+          (key.y + 0.5) * this.cellSize,
+          0,
+          (key.x + 0.5) * this.cellSize,
+          (key.y + 0.5) * this.cellSize,
+          this.cellSize * 0.4
+        );
+        grad.addColorStop(0, '#ffd700');
+        grad.addColorStop(1, '#ffed4e');
+        this.ctx.fillStyle = grad;
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#ffd700';
+        this.ctx.beginPath();
+        this.ctx.arc(
+          (key.x + 0.5) * this.cellSize,
+          (key.y + 0.5) * this.cellSize,
+          this.cellSize * 0.3,
+          0,
+          Math.PI * 2
+        );
+        this.ctx.fill();
+        this.ctx.shadowBlur = 0;
+      }
+    });
+
+    const grad = this.ctx.createRadialGradient(
+      (this.player.x + 0.5) * this.cellSize,
+      (this.player.y + 0.5) * this.cellSize,
+      0,
+      (this.player.x + 0.5) * this.cellSize,
+      (this.player.y + 0.5) * this.cellSize,
+      this.cellSize * 0.5
+    );
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.5, '#e0f2ff');
+    grad.addColorStop(1, '#bae6fd');
+    this.ctx.fillStyle = grad;
+    this.ctx.shadowBlur = 25;
+    this.ctx.shadowColor = '#bae6fd';
+    this.ctx.beginPath();
+    this.ctx.arc(
+      (this.player.x + 0.5) * this.cellSize,
+      (this.player.y + 0.5) * this.cellSize,
+      this.cellSize * 0.35,
+      0,
+      Math.PI * 2
+    );
+    this.ctx.fill();
+    this.ctx.shadowBlur = 0;
+  }
+  
+  startTimer() {
+    setInterval(() => {
+      if (!this.gameWon) {
+        const elapsed = Date.now() - this.startTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const tenths = Math.floor((elapsed % 1000) / 100);
+        
+        document.getElementById('timer').textContent = 
+          `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${tenths}`;
+      }
+    }, 100);
+  }
+}
+
+window.game = new Game();
+
+// --- Touch controls (D-pad + swipe) ---
+(function setupMobileControls() {
+  const getGame = () => window.game;
+  const byId = (id) => document.getElementById(id);
+
+  const bindHold = (id, dx, dy) => {
+    const btn = byId(id);
+    if (!btn) return;
+    let timer = null;
+
+    const start = (e) => {
+      e.preventDefault();
+      const g = getGame();
+      if (!g) return;
+      if (typeof g.focusGame === "function") g.focusGame();
+      if (typeof g.move === "function") g.move(dx, dy);
+      timer = setInterval(() => {
+        const gg = getGame();
+        if (gg && typeof gg.move === "function") gg.move(dx, dy);
+      }, 130);
+    };
+
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+
+    btn.addEventListener("pointerdown", start, { passive: false });
+    btn.addEventListener("pointerup", stop, { passive: true });
+    btn.addEventListener("pointercancel", stop, { passive: true });
+    btn.addEventListener("pointerleave", stop, { passive: true });
+  };
+
+  bindHold("btnUp", 0, -1);
+  bindHold("btnDown", 0, 1);
+  bindHold("btnLeft", -1, 0);
+  bindHold("btnRight", 1, 0);
+
+  // Свайпы по канвасу
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return;
+  let sx = 0, sy = 0, active = false;
+
+  canvas.addEventListener("pointerdown", (e) => {
+    active = true;
+    sx = e.clientX;
+    sy = e.clientY;
+  }, { passive: true });
+
+  canvas.addEventListener("pointerup", (e) => {
+    if (!active) return;
+    active = false;
+    const dx = e.clientX - sx;
+    const dy = e.clientY - sy;
+    const TH = 28;
+
+    if (Math.abs(dx) < TH && Math.abs(dy) < TH) return;
+
+    const g = getGame();
+    if (!g || typeof g.move !== "function") return;
+    if (typeof g.focusGame === "function") g.focusGame();
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      g.move(dx > 0 ? 1 : -1, 0);
+    } else {
+      g.move(0, dy > 0 ? 1 : -1);
+    }
+  }, { passive: true });
+})();
+
+</script>
+</body>
+</html>
