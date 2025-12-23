@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лови фрукты</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 100%);
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        /* маленькая кнопка "Правила" в панели */
+        #ui .small-btn {
+            pointer-events: auto;
+            background: rgba(0,0,0,0.35);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            margin-left: 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        #ui .small-btn:hover {
+            background: rgba(0,0,0,0.5);
+        }
+        
+        #modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            z-index: 100;
+        }
+        
+        #modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        #modal p {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        #questionModal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            z-index: 100;
+        }
+        
+        #questionModal h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        #questionText {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-weight: bold;
+        }
+        
+        .answer-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            margin: 15px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: left;
+        }
+        
+        .answer-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        #fireworks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Модальное окно с правилами */
+        #rulesModal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            z-index: 100;
+            text-align: left;
+        }
+
+        #rulesModal h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #rulesModal ul {
+            margin-left: 20px;
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+    
+
+/* --- Mobile friendly canvas --- */
+#gameContainer {
+  width: min(94vw, 860px);
+  margin: 0 auto;
+}
+
+#gameCanvas {
+  width: 100%;
+  height: auto;
+  touch-action: none; /* чтобы при свайпе не скроллило страницу */
+  border-radius: 18px;
+}
+
+/* Модалки — чтобы на телефоне не обрезались */
+.modal-content, .question-modal-content, .rules-modal-content {
+  max-height: 92dvh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  body { padding: 12px; }
+  #ui { gap: 10px; flex-wrap: wrap; }
+  #ui > div { font-size: 18px; }
+  #rulesButton { padding: 10px 14px; font-size: 16px; }
+}
+
+</style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="fireworks" width="800" height="600"></canvas>
+        
+        <div id="ui">
+            <div>Очки: <span id="score">0</span></div>
+            <div>
+                Жизни: <span id="lives">❤️❤️❤️</span>
+                <button id="rulesButton" class="small-btn">Правила</button>
+            </div>
+        </div>
+        
+        <div id="modal">
+            <h2 id="modalTitle">Добро пожаловать!</h2>
+            <p id="modalText">Управляй корзиной стрелками или мышью, лови фрукты! Не пропускай их!</p>
+            <button class="btn" onclick="startGame()">Начать игру</button>
+        </div>
+        
+        <div id="questionModal">
+            <h3>Вопрос по русскому языку</h3>
+            <p id="questionText"></p>
+            <button class="answer-btn" onclick="answerQuestion(0)"></button>
+            <button class="answer-btn" onclick="answerQuestion(1)"></button>
+        </div>
+
+        <!-- Модальное окно с правилами игры -->
+        <div id="rulesModal">
+            <h3>Правила игры</h3>
+            <ul>
+                <li>Управляйте корзиной с помощью стрелок клавиатуры или мыши.</li>
+                <li>Ловите падающие фрукты — за каждый фрукт получаете 1 очко.</li>
+                <li>Пропущенный фрукт отнимает одну жизнь. Всего у вас 3 жизни.</li>
+                <li>Каждые 5 очков появляется вопрос по русскому языку. Отвечайте внимательно!</li>
+                <li>Неправильный ответ отнимает 5 очков, правильный — сохраняет ваш результат.</li>
+                <li>Наберите 50 очков, чтобы победить.</li>
+            </ul>
+            <button class="btn" onclick="closeRules()">Понятно, играть!</button>
+        </div>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const fireworksCanvas = document.getElementById('fireworks');
+        const fireworksCtx = fireworksCanvas.getContext('2d');
+        
+        // Изображения фруктов - можно заменить на свои URL
+        const fruitImages = {
+            apple: '', // Вставьте URL изображения яблока
+            banana: '', // Вставьте URL изображения банана
+            orange: '', // Вставьте URL изображения апельсина
+            grape: '', // Вставьте URL изображения винограда
+            strawberry: '' // Вставьте URL изображения клубники
+        };
+        
+        // Эмодзи фруктов (используются если нет изображений)
+        const fruitEmojis = ['🍎', '🍌', '🍊', '🍇', '🍓', '🍉', '🍑', '🍒'];
+        
+        // Создание звуков с помощью Web Audio API (работает офлайн)
+        let audioContext = null;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // Разблокировка audio context для мобильных браузеров
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+        
+        function playSound(type) {
+            initAudio();
+            
+            switch(type) {
+                case 'catch': // Звук поимки фрукта
+                    {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(783.99, audioContext.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.15);
+                    }
+                    break;
+                    
+                case 'lose': // Звук потери жизни
+                    {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(220, audioContext.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.35);
+                    }
+                    break;
+                    
+                case 'correct': // Звук правильного ответа
+                    {
+                        const notes = [523.25, 659.25, 783.99];
+                        notes.forEach((freq, i) => {
+                            const osc = audioContext.createOscillator();
+                            const gain = audioContext.createGain();
+                            osc.connect(gain);
+                            gain.connect(audioContext.destination);
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.1);
+                            gain.gain.setValueAtTime(0.25, audioContext.currentTime + i * 0.1);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
+                            osc.start(audioContext.currentTime + i * 0.1);
+                            osc.stop(audioContext.currentTime + i * 0.1 + 0.3);
+                        });
+                    }
+                    break;
+                    
+                case 'wrong': // Звук неправильного ответа
+                    {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                    }
+                    break;
+                    
+                case 'win': // Звук победы
+                    {
+                        const winNotes = [523.25, 659.25, 783.99, 1046.50];
+                        winNotes.forEach((freq, i) => {
+                            const osc = audioContext.createOscillator();
+                            const gain = audioContext.createGain();
+                            osc.connect(gain);
+                            gain.connect(audioContext.destination);
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.15);
+                            gain.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.15);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.5);
+                            osc.start(audioContext.currentTime + i * 0.15);
+                            osc.stop(audioContext.currentTime + i * 0.15 + 0.5);
+                        });
+                    }
+                    break;
+            }
+        }
+        
+        // Вопросы по правописанию гласных в корнях с чередованием
+        const questions = [
+            {
+                question: 'В слове "з..ря" какая буква пишется в корне?',
+                answers: ['А (без ударения в корне зар/зор пишется А)', 'О (под ударением пишется то, что слышится)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "заг..реть" какая буква пишется?',
+                answers: ['А (под ударением в гар/гор)', 'О (без ударения в гар/гор пишется О)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "р..стение" какая буква пишется?',
+                answers: ['А (перед СТ, Щ в раст/ращ/рос пишется А)', 'О (перед С пишется О)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "предл..жить" какая буква пишется?',
+                answers: ['А (перед Г в лаг/лож)', 'О (перед Ж в лаг/лож пишется О)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "к..саться" какая буква пишется?',
+                answers: ['А (есть суффикс А после корня)', 'О (нет суффикса А)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "соб..рать" какая буква пишется?',
+                answers: ['Е (нет суффикса А)', 'И (есть суффикс А после корня)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "выт..реть" какая буква пишется?',
+                answers: ['Е (нет суффикса А после корня)', 'И (есть суффикс А)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "бл..стать" какая буква пишется?',
+                answers: ['Е (нет суффикса А)', 'И (есть суффикс А после корня)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "отр..сль" какая буква пишется?',
+                answers: ['А (исключение)', 'О (О перед С)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "р..сток" какая буква пишется?',
+                answers: ['А (перед СТ, Щ в раст/ращ/рос пишется А)', 'О (исключение)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "откл..нение" какая буква пишется?',
+                answers: ['А (под ударением)', 'О (без ударения в клан/клон пишется О)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "выр..сти" какая буква пишется?',
+                answers: ['А (перед СТ/Щ в раст/ращ/рос)', 'О (перед С пишется О)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "ск..кать" какая буква пишется?',
+                answers: ['А (перед К в скак/скоч пишется А)', 'О (перед Ч пишется О)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "подск..чить" какая буква пишется?',
+                answers: ['А (перед К пишется А)', 'О (перед Ч в скак/скоч пишется О)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "зам..реть" какая буква пишется?',
+                answers: ['Е (нет суффикса А после корня)', 'И (есть суффикс А)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "выж..гать" какая буква пишется?',
+                answers: ['Е (нет суффикса А)', 'И (есть суффикс А после корня)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "пост..лить" какая буква пишется?',
+                answers: ['Е (нет суффикса А)', 'И (есть суффикс А после корня)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "выч..тать" какая буква пишется?',
+                answers: ['Е (нет суффикса А)', 'И (есть суффикс А после корня)'],
+                correct: 1
+            },
+            {
+                question: 'В слове "пол..гать" какая буква пишется?',
+               answers: ['А (перед Г в лаг/лож)', 'О (перед Ж в лаг/лож пишется О)'],
+                correct: 0
+            },
+            {
+                question: 'В слове "покл..ниться" какая буква пишется?',
+               answers: ['А (под ударением)', 'О (без ударения в клан/клон пишется О)'],
+                correct: 1
+            }
+        ];
+        
+        let gameState = {
+            score: 0,
+            lives: 3,
+            isPlaying: false,
+            isPaused: false,
+            basket: { x: 350, y: 530, width: 100, height: 60 },
+            fruits: [],
+            mouseX: 350,
+            lastQuestionScore: 0,
+            usedQuestions: [],
+            won: false
+        };
+        
+        // Управление клавиатурой
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Управление мышью/тачем (одинаково) — работает и в iframe на телефоне
+        const setPointerX = (clientX) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            gameState.mouseX = (clientX - rect.left) * scaleX;
+        };
+
+        let pointerActive = false;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            pointerActive = true;
+            if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+            setPointerX(e.clientX);
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (e.pointerType === 'mouse' || pointerActive) {
+                setPointerX(e.clientX);
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('pointerup', () => { pointerActive = false; }, { passive: true });
+        canvas.addEventListener('pointercancel', () => { pointerActive = false; }, { passive: true });
+
+        // На всякий случай поддержка старых iOS (если pointer-events отключены)
+        canvas.addEventListener('touchstart', (e) => {
+            const t = e.touches[0];
+            if (!t) return;
+            setPointerX(t.clientX);
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            if (!t) return;
+            setPointerX(t.clientX);
+            e.preventDefault();
+        }, { passive: false });
+
+        
+        function startGame() {
+            document.getElementById('modal').style.display = 'none';
+            initAudio(); // Инициализация звука при начале игры
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+            gameState.fruits = [];
+            gameState.lastQuestionScore = 0;
+            gameState.usedQuestions = [];
+            gameState.won = false;
+            updateUI();
+            gameLoop();
+        }
+        
+        function spawnFruit() {
+            const fruit = {
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -60,
+                size: 50,
+                speed: 2 + Math.random() * 2,
+                emoji: fruitEmojis[Math.floor(Math.random() * fruitEmojis.length)]
+            };
+            gameState.fruits.push(fruit);
+        }
+        
+        function updateBasket() {
+            if (keys['ArrowLeft'] && gameState.basket.x > 0) {
+                gameState.basket.x -= 8;
+            }
+            if (keys['ArrowRight'] && gameState.basket.x < canvas.width - gameState.basket.width) {
+                gameState.basket.x += 8;
+            }
+            
+            // Управление мышью
+            const targetX = gameState.mouseX - gameState.basket.width / 2;
+            if (Math.abs(targetX - gameState.basket.x) > 5) {
+                gameState.basket.x += (targetX - gameState.basket.x) * 0.15;
+            }
+            
+            gameState.basket.x = Math.max(0, Math.min(canvas.width - gameState.basket.width, gameState.basket.x));
+        }
+        
+        function updateFruits() {
+            for (let i = gameState.fruits.length - 1; i >= 0; i--) {
+                const fruit = gameState.fruits[i];
+                fruit.y += fruit.speed;
+                
+                // Проверка поимки
+                if (fruit.y + fruit.size > gameState.basket.y &&
+                    fruit.y < gameState.basket.y + gameState.basket.height &&
+                    fruit.x + fruit.size > gameState.basket.x &&
+                    fruit.x < gameState.basket.x + gameState.basket.width) {
+                    gameState.score++;
+                    gameState.fruits.splice(i, 1);
+                    playSound('catch'); // Звук поимки
+                    updateUI();
+                    
+                    // Проверка на вопрос каждые 5 очков
+                    if (gameState.score % 5 === 0 && gameState.score !== gameState.lastQuestionScore) {
+                        if (gameState.score >= 50) {
+                            winGame();
+                        } else {
+                            showQuestion();
+                        }
+                    }
+                    continue;
+                }
+                
+                // Проверка пропуска
+                if (fruit.y > canvas.height) {
+                    gameState.lives--;
+                    gameState.fruits.splice(i, 1);
+                    playSound('lose'); // Звук потери жизни
+                    updateUI();
+                    
+                    if (gameState.lives <= 0) {
+                        endGame();
+                    }
+                }
+            }
+        }
+        
+        function drawBasket() {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(gameState.basket.x, gameState.basket.y, gameState.basket.width, gameState.basket.height);
+            
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(gameState.basket.x + i * 20, gameState.basket.y);
+                ctx.lineTo(gameState.basket.x + i * 20, gameState.basket.y + gameState.basket.height);
+                ctx.stroke();
+            }
+            
+            ctx.beginPath();
+            ctx.arc(gameState.basket.x, gameState.basket.y + 20, 15, 0, Math.PI);
+            ctx.arc(gameState.basket.x + gameState.basket.width, gameState.basket.y + 20, 15, 0, Math.PI);
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+        
+        function drawFruits() {
+            gameState.fruits.forEach(fruit => {
+                ctx.font = `${fruit.size}px Arial`;
+                ctx.fillText(fruit.emoji, fruit.x, fruit.y + fruit.size);
+            });
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Фон
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#98D8C8');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawFruits();
+            drawBasket();
+        }
+        
+        let lastSpawn = 0;
+        function gameLoop(timestamp = 0) {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            if (timestamp - lastSpawn > 1000) {
+                spawnFruit();
+                lastSpawn = timestamp;
+            }
+            
+            updateBasket();
+            updateFruits();
+            draw();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('lives').textContent = '❤️'.repeat(gameState.lives);
+        }
+        
+        function showQuestion() {
+            gameState.isPaused = true;
+            gameState.lastQuestionScore = gameState.score;
+            
+            // Выбираем неиспользованный вопрос
+            let availableQuestions = questions.filter((q, i) => !gameState.usedQuestions.includes(i));
+            if (availableQuestions.length === 0) {
+                gameState.usedQuestions = [];
+                availableQuestions = questions;
+            }
+            
+            const questionIndex = questions.indexOf(availableQuestions[Math.floor(Math.random() * availableQuestions.length)]);
+            gameState.currentQuestion = questionIndex;
+            gameState.usedQuestions.push(questionIndex);
+            
+            const q = questions[questionIndex];
+            document.getElementById('questionText').textContent = q.question;
+            const buttons = document.querySelectorAll('.answer-btn');
+            buttons[0].textContent = q.answers[0];
+            buttons[1].textContent = q.answers[1];
+            
+            document.getElementById('questionModal').style.display = 'block';
+        }
+        
+        function answerQuestion(answerIndex) {
+            const q = questions[gameState.currentQuestion];
+            document.getElementById('questionModal').style.display = 'none';
+            
+            if (answerIndex !== q.correct) {
+                playSound('wrong'); // Звук неправильного ответа
+                gameState.score = Math.max(0, gameState.score - 5);
+                updateUI();
+            } else {
+                playSound('correct'); // Звук правильного ответа
+            }
+            
+            gameState.isPaused = false;
+            gameLoop();
+        }
+        
+        function winGame() {
+            gameState.isPlaying = false;
+            gameState.won = true;
+            playSound('win'); // Звук победы
+            showFireworks();
+
+            // 👉 сообщаем главной странице, что игра успешно пройдена (если открыто в модальном окне)
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'boardSuccess' }, '*');
+            }
+
+            setTimeout(() => {
+                document.getElementById('modalTitle').textContent = '🎉 Победа! 🎉';
+                document.getElementById('modalText').textContent = 'Поздравляем! Вы набрали 50 очков и ответили на все вопросы!';
+                document.getElementById('modal').style.display = 'block';
+            }, 3000);
+        }
+
+        function endGame() {
+            gameState.isPlaying = false;
+            document.getElementById('modalTitle').textContent = 'Игра окончена';
+            document.getElementById('modalText').textContent = `Вы набрали ${gameState.score} очков!`;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        // Фейерверк
+        function showFireworks() {
+            fireworksCanvas.style.display = 'block';
+            const particles = [];
+            
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 100
+                });
+            }
+            
+            function animateFireworks() {
+                fireworksCtx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+                
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1;
+                    p.life -= 2;
+                    
+                    fireworksCtx.fillStyle = p.color;
+                    fireworksCtx.globalAlpha = p.life / 100;
+                    fireworksCtx.beginPath();
+                    fireworksCtx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    fireworksCtx.fill();
+                    
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                
+                if (particles.length > 0) {
+                    requestAnimationFrame(animateFireworks);
+                } else {
+                    fireworksCanvas.style.display = 'none';
+                }
+            }
+            
+            animateFireworks();
+        }
+
+        // Открытие / закрытие окна с правилами
+        function openRules() {
+            gameState.isPaused = true;
+            document.getElementById('rulesModal').style.display = 'block';
+        }
+
+        function closeRules() {
+            document.getElementById('rulesModal').style.display = 'none';
+            gameState.isPaused = false;
+            if (gameState.isPlaying) {
+                gameLoop();
+            }
+        }
+
+        // Навешиваем обработчик на кнопку "Правила"
+        document.getElementById('rulesButton').addEventListener('click', openRules);
+        
+        // Показываем стартовое окно
+        document.getElementById('modal').style.display = 'block';
+    </script>
+</body>
+</html>
